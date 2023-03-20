@@ -66,15 +66,14 @@ If you want to add payments to your bot – write me on Telegram ([@karfly](http
 
 2. Get your Telegram bot token from [@BotFather](https://t.me/BotFather)
 
-3. Edit `config/config.example.yml` to set your tokens and run 2 commands below (*if you're advanced user, you can also edit* `config/config.example.env`):
+3. Download `prod.yml` compose:
     ```bash
-    mv config/config.example.yml config/config.yml
-    mv config/config.example.env config/config.env
+    curl https://raw.githubusercontent.com/nickgashkov/chatgpt_telegram_bot/main/docker-compose.yml > docker-compose.yml
     ```
 
 4. 🔥 And now **run**:
     ```bash
-    docker-compose --env-file config/config.env up --build
+    docker compose run -e TELEGRAM_TOKEN=secret -e OPENAI_API_KEY=secret -e ALLOWED_TELEGRAM_USERNAMES=secret --rm bot
     ```
 
 ## ❤️ Top donations

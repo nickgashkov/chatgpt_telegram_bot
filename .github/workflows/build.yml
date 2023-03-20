@@ -39,4 +39,4 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
           push: true
-          tags: ghcr.io/nickgashkov/chatgpt_telegram_bot:${{ steps.semver.outputs.non-prefixed }}
+          tags: ghcr.io/nickgashkov/chatgpt_telegram_bot:latest,ghcr.io/nickgashkov/chatgpt_telegram_bot:${{ steps.semver.outputs.non-prefixed }}

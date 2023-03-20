@@ -1,0 +1,19 @@
+version: "3"
+
+services:
+  bot:
+    command: python3 bot/bot.py
+    restart: unless-stopped
+    image: "ghcr.io/nickgashkov/chatgpt_telegram_bot:latest"
+    depends_on:
+      - mongo
+
+  mongo:
+    container_name: mongo
+    image: mongo:latest
+    restart: unless-stopped
+    volumes:
+      - mongodata:/data/db
+
+volumes:
+  mongodata:
