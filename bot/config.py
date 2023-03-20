@@ -7,7 +7,7 @@ config_dir = Path(__file__).parent.parent.resolve() / "config"
 
 # load .env config and envs
 envs = {
-    **dotenv.dotenv_values(config_dir / "config.env"),
+    **dotenv.dotenv_values(config_dir / "config.example.env"),
     **os.environ,
 }
 
