@@ -30,7 +30,7 @@ jobs:
 
       - uses: docker/login-action@v2
         with:
-          username: ${{ github.a_ctor }}
+          username: ${{ github.actor }}
           password: ${{ secrets.GHCR_PASSWORD }}
           registry: ghcr.io
 
