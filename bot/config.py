@@ -1,30 +1,30 @@
 import yaml
 import dotenv
+import os
 from pathlib import Path
 
 config_dir = Path(__file__).parent.parent.resolve() / "config"
 
-# load yaml config
-with open(config_dir / "config.yml", 'r') as f:
-    config_yaml = yaml.safe_load(f)
-
-# load .env config
-config_env = dotenv.dotenv_values(config_dir / "config.env")
+# load .env config and envs
+envs = {
+    **dotenv.dotenv_values(config_dir / "config.env"),
+    **os.environ,
+}
 
 # config parameters
-telegram_token = config_yaml["telegram_token"]
-openai_api_key = config_yaml["openai_api_key"]
-use_chatgpt_api = config_yaml.get("use_chatgpt_api", True)
-allowed_telegram_usernames = config_yaml["allowed_telegram_usernames"]
-new_dialog_timeout = config_yaml["new_dialog_timeout"]
-enable_message_streaming = config_yaml.get("enable_message_streaming", True)
-mongodb_uri = f"mongodb://mongo:{config_env['MONGODB_PORT']}"
+telegram_token = envs["TELEGRAM_TOKEN"]
+openai_api_key = envs["OPENAI_API_KEY"]
+use_chatgpt_api = bool(int(envs.get("USE_CHATGPT_API", 1)))
+allowed_telegram_usernames = envs["ALLOWED_TELEGRAM_USERNAMES"].split(",")
+new_dialog_timeout = float(envs["NEW_DIALOG_TIMEOUT"])
+enable_message_streaming = bool(int(envs.get("ENABLE_MESSAGE_STREAMING", 1)))
+mongodb_uri = f"mongodb://mongo:{envs['MONGODB_PORT']}"
 
 # chat_modes
 with open(config_dir / "chat_modes.yml", 'r') as f:
     chat_modes = yaml.safe_load(f)
 
 # prices
-chatgpt_price_per_1000_tokens = config_yaml.get("chatgpt_price_per_1000_tokens", 0.002)
-gpt_price_per_1000_tokens = config_yaml.get("gpt_price_per_1000_tokens", 0.02)
-whisper_price_per_1_min = config_yaml.get("whisper_price_per_1_min", 0.006)
+chatgpt_price_per_1000_tokens = float(envs.get("CHATGPT_PRICE_PER_1000_TOKENS", 0.002))
+gpt_price_per_1000_tokens = float(envs.get("GPT_PRICE_PER_1000_TOKENS", 0.02))
+whisper_price_per_1_min = float(envs.get("WHISPER_PRICE_PER_1_MIN", 0.006))
