@@ -68,7 +68,7 @@ If you want to add payments to your bot – write me on Telegram ([@karfly](http
 
 3. Download `prod.yml` compose:
     ```bash
-    curl https://raw.githubusercontent.com/nickgashkov/chatgpt_telegram_bot/main/docker-compose.yml > docker-compose.yml
+    curl https://raw.githubusercontent.com/nickgashkov/chatgpt_telegram_bot/main/docker-compose.prod.yml > docker-compose.yml
     ```
 
 4. 🔥 And now **run**:
