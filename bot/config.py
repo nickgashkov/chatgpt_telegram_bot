@@ -28,3 +28,7 @@ with open(config_dir / "chat_modes.yml", 'r') as f:
 chatgpt_price_per_1000_tokens = float(envs.get("CHATGPT_PRICE_PER_1000_TOKENS", 0.002))
 gpt_price_per_1000_tokens = float(envs.get("GPT_PRICE_PER_1000_TOKENS", 0.02))
 whisper_price_per_1_min = float(envs.get("WHISPER_PRICE_PER_1_MIN", 0.006))
+
+# models
+with open(config_dir / "models.yml", 'r') as f:
+    models = yaml.safe_load(f)
