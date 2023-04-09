@@ -529,7 +529,6 @@ def run_bot() -> None:
     application = (
         ApplicationBuilder()
         .token(config.telegram_token)
-        .concurrent_updates(True)
         .rate_limiter(AIORateLimiter(max_retries=5))
         .post_init(post_init)
         .build()
