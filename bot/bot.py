@@ -5,6 +5,8 @@ import traceback
 import html
 import json
 import tempfile
+from typing import Union
+
 import pydub
 from pathlib import Path
 from datetime import datetime
@@ -51,6 +53,19 @@ HELP_MESSAGE = """Commands:
 """
 
 
+def access_log(func):
+    def wrapper(*args, **kwargs):
+        try:
+            resp = func(*args, **kwargs)
+            logger.info(f"--> Served {func.__name__}")
+            return resp
+        except Exception:
+            logger.exception(f"--! Exception in {func.__name__}")
+            raise
+
+    return wrapper
+
+
 def split_text_into_chunks(text, chunk_size):
     for i in range(0, len(text), chunk_size):
         yield text[i:i + chunk_size]
@@ -92,6 +107,7 @@ async def register_user_if_not_exists(update: Update, context: CallbackContext, 
         db.set_user_attribute(user.id, "n_transcribed_seconds", 0.0)
 
 
+@access_log
 async def start_handle(update: Update, context: CallbackContext):
     await register_user_if_not_exists(update, context, update.message.from_user)
     user_id = update.message.from_user.id
@@ -107,6 +123,7 @@ async def start_handle(update: Update, context: CallbackContext):
     await update.message.reply_text(reply_text, parse_mode=ParseMode.HTML)
 
 
+@access_log
 async def help_handle(update: Update, context: CallbackContext):
     await register_user_if_not_exists(update, context, update.message.from_user)
     user_id = update.message.from_user.id
@@ -114,6 +131,7 @@ async def help_handle(update: Update, context: CallbackContext):
     await update.message.reply_text(HELP_MESSAGE, parse_mode=ParseMode.HTML)
 
 
+@access_log
 async def retry_handle(update: Update, context: CallbackContext):
     await register_user_if_not_exists(update, context, update.message.from_user)
     if await is_previous_message_not_answered_yet(update, context): return
@@ -132,6 +150,7 @@ async def retry_handle(update: Update, context: CallbackContext):
     await message_handle(update, context, message=last_dialog_message["user"], use_new_dialog_timeout=False)
 
 
+@access_log
 async def message_handle(update: Update, context: CallbackContext, message=None, use_new_dialog_timeout=True):
     # check if message is edited
     if update.edited_message is not None:
@@ -265,6 +284,7 @@ async def is_previous_message_not_answered_yet(update: Update, context: Callback
         return False
 
 
+@access_log
 async def voice_message_handle(update: Update, context: CallbackContext):
     await register_user_if_not_exists(update, context, update.message.from_user)
     if await is_previous_message_not_answered_yet(update, context): return
@@ -298,6 +318,7 @@ async def voice_message_handle(update: Update, context: CallbackContext):
     await message_handle(update, context, message=transcribed_text)
 
 
+@access_log
 async def new_dialog_handle(update: Update, context: CallbackContext):
     await register_user_if_not_exists(update, context, update.message.from_user)
     if await is_previous_message_not_answered_yet(update, context): return
@@ -312,6 +333,7 @@ async def new_dialog_handle(update: Update, context: CallbackContext):
     await update.message.reply_text(f"{openai_utils.CHAT_MODES[chat_mode]['welcome_message']}", parse_mode=ParseMode.HTML)
 
 
+@access_log
 async def cancel_handle(update: Update, context: CallbackContext):
     await register_user_if_not_exists(update, context, update.message.from_user)
 
@@ -325,6 +347,7 @@ async def cancel_handle(update: Update, context: CallbackContext):
         await update.message.reply_text("<i>Nothing to cancel...</i>", parse_mode=ParseMode.HTML)
 
 
+@access_log
 async def show_chat_modes_handle(update: Update, context: CallbackContext):
     await register_user_if_not_exists(update, context, update.message.from_user)
     if await is_previous_message_not_answered_yet(update, context): return
@@ -340,6 +363,7 @@ async def show_chat_modes_handle(update: Update, context: CallbackContext):
     await update.message.reply_text("Select chat mode:", reply_markup=reply_markup)
 
 
+@access_log
 async def set_chat_mode_handle(update: Update, context: CallbackContext):
     await register_user_if_not_exists(update.callback_query, context, update.callback_query.from_user)
     user_id = update.callback_query.from_user.id
@@ -381,6 +405,7 @@ def get_settings_menu(user_id: int):
     return text, reply_markup
 
 
+@access_log
 async def settings_handle(update: Update, context: CallbackContext):
     await register_user_if_not_exists(update, context, update.message.from_user)
     if await is_previous_message_not_answered_yet(update, context): return
@@ -392,6 +417,7 @@ async def settings_handle(update: Update, context: CallbackContext):
     await update.message.reply_text(text, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
 
 
+@access_log
 async def set_settings_handle(update: Update, context: CallbackContext):
     await register_user_if_not_exists(update.callback_query, context, update.callback_query.from_user)
     user_id = update.callback_query.from_user.id
@@ -411,6 +437,7 @@ async def set_settings_handle(update: Update, context: CallbackContext):
             pass
 
 
+@access_log
 async def show_balance_handle(update: Update, context: CallbackContext):
     await register_user_if_not_exists(update, context, update.message.from_user)
 
@@ -448,13 +475,18 @@ async def show_balance_handle(update: Update, context: CallbackContext):
     await update.message.reply_text(text, parse_mode=ParseMode.HTML)
 
 
+@access_log
 async def edited_message_handle(update: Update, context: CallbackContext):
     text = "🥲 Unfortunately, message <b>editing</b> is not supported"
     await update.edited_message.reply_text(text, parse_mode=ParseMode.HTML)
 
 
-async def error_handle(update: Update, context: CallbackContext) -> None:
-    logger.error(msg="Exception while handling an update:", exc_info=context.error)
+@access_log
+async def error_handle(update: Union[Update, object], context: CallbackContext) -> None:
+    logger.error("Got unexpected error", exc_info=context.error)
+
+    if not isinstance(update, Update) or update.effective_message is None:
+        return
 
     try:
         # collect error message
@@ -475,7 +507,7 @@ async def error_handle(update: Update, context: CallbackContext) -> None:
             except telegram.error.BadRequest:
                 # answer has invalid characters, so we send it without parse_mode
                 await context.bot.send_message(update.effective_chat.id, message_chunk)
-    except:
+    except Exception:
         await context.bot.send_message(update.effective_chat.id, "Some error in error handler")
 
 async def post_init(application: Application):
@@ -489,6 +521,11 @@ async def post_init(application: Application):
     ])
 
 def run_bot() -> None:
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
+
     application = (
         ApplicationBuilder()
         .token(config.telegram_token)
